@@ -61,16 +61,16 @@ logger = SummaryWriter(args.logdir)
 StereoDataset = __datasets__[args.dataset]
 kittiloadertrain = StereoDataset(args.datapath, args.trainlist, True)
 kittiloadertest = StereoDataset(args.datapath, args.testlist, False)
-#eth3d
-all_left_img, all_right_img, all_left_disp, _ = ls.dataloader('%s/eth3d/'%args.datapath)
+# eth3d
+all_left_img, all_right_img, all_left_disp, _ = ls.dataloader('%s/eth3d/' % args.datapath)
 eth3dloadertrain = DA.myImageFloder(all_left_img, all_right_img, all_left_disp, True)
-all_left_img, all_right_img, all_left_disp, _ = ls.dataloader('%s/eth3d/'%args.datapath)
+all_left_img, all_right_img, all_left_disp, _ = ls.dataloader('%s/eth3d/' % args.datapath)
 eth3dloadertest = DA.myImageFloder(all_left_img, all_right_img, all_left_disp, False)
 
-#middleburyloader
-all_left_img, all_right_img, all_left_disp, _ = ls.dataloader('%s/middleburytrain/'%args.datapath)
+# middleburyloader
+all_left_img, all_right_img, all_left_disp, _ = ls.dataloader('%s/middleburytrain/' % args.datapath)
 middleburyloadertrain = mid.myImageFloder(all_left_img, all_right_img, all_left_disp, True)
-all_left_img, all_right_img, all_left_disp, _ = ls.dataloader('%s/dataH_DF/'%args.datapath)
+all_left_img, all_right_img, all_left_disp, _ = ls.dataloader('%s/dataH_DF/' % args.datapath)
 middleburyloadertest = mid.myImageFloder(all_left_img, all_right_img, all_left_disp, False)
 
 train_dataset = torch.utils.data.ConcatDataset([kittiloadertrain] + 2 * [eth3dloadertrain] + [middleburyloadertrain])
@@ -84,11 +84,9 @@ test_dataset = torch.utils.data.ConcatDataset([kittiloadertest] + [eth3dloaderte
 TrainImgLoader = DataLoader(train_dataset, args.batch_size, shuffle=True, num_workers=8, drop_last=True)
 TestImgLoader = DataLoader(test_dataset, args.test_batch_size, shuffle=False, num_workers=4, drop_last=False)
 
-
 TestImgLoaderkitti = DataLoader(kittiloadertest, args.test_batch_size, shuffle=False, num_workers=4, drop_last=False)
 TestImgLoadereth3d = DataLoader(eth3dloadertest, 1, shuffle=False, num_workers=4, drop_last=False)
 TestImgLoadermiddlebury = DataLoader(middleburyloadertest, 1, shuffle=False, num_workers=4, drop_last=False)
-
 
 # model, optimizer
 model = __models__[args.model](args.maxdisp)
@@ -149,116 +147,114 @@ def train():
             torch.save(checkpoint_data, "{}/checkpoint_{:0>6}.ckpt".format(args.logdir, epoch_idx))
         gc.collect()
         if epoch_idx >= -1:
-         # testing
-         # avg_test_scalars = AverageMeterDict()
+            # testing
+            # avg_test_scalars = AverageMeterDict()
 
-         # for batch_idx, sample in enumerate(TestImgLoader):
-         #    global_step = len(TestImgLoader) * epoch_idx + batch_idx
-         #    start_time = time.time()
-         #    do_summary = global_step % args.summary_freq == 0
-         #    loss, scalar_outputs, image_outputs = test_sample(sample, compute_metrics=do_summary)
-         #    if do_summary:
-         #        save_scalars(logger, 'test', scalar_outputs, global_step)
-         #        save_images(logger, 'test', image_outputs, global_step)
-         #    avg_test_scalars.update(scalar_outputs)
-         #    del scalar_outputs, image_outputs
-         #    print('Epoch {}/{}, Iter {}/{}, test loss = {:.3f}, time = {:3f}'.format(epoch_idx, args.epochs,
-         #                                                                             batch_idx,
-         #                                                                             len(TestImgLoader), loss,
-         #                                                                             time.time() - start_time))
-         # avg_test_scalars = avg_test_scalars.mean()
-         # nowerror = avg_test_scalars["D1"][0]
-         # if  nowerror < error :
-         #    bestepoch = epoch_idx
-         #    error = avg_test_scalars["D1"][0]
-         # save_scalars(logger, 'fulltest', avg_test_scalars, len(TrainImgLoader) * (epoch_idx + 1))
-         # print("avg_test_scalars", avg_test_scalars)
-         # print('MAX epoch %d total test error = %.5f' % (bestepoch, error))
-         # gc.collect()
+            # for batch_idx, sample in enumerate(TestImgLoader):
+            #    global_step = len(TestImgLoader) * epoch_idx + batch_idx
+            #    start_time = time.time()
+            #    do_summary = global_step % args.summary_freq == 0
+            #    loss, scalar_outputs, image_outputs = test_sample(sample, compute_metrics=do_summary)
+            #    if do_summary:
+            #        save_scalars(logger, 'test', scalar_outputs, global_step)
+            #        save_images(logger, 'test', image_outputs, global_step)
+            #    avg_test_scalars.update(scalar_outputs)
+            #    del scalar_outputs, image_outputs
+            #    print('Epoch {}/{}, Iter {}/{}, test loss = {:.3f}, time = {:3f}'.format(epoch_idx, args.epochs,
+            #                                                                             batch_idx,
+            #                                                                             len(TestImgLoader), loss,
+            #                                                                             time.time() - start_time))
+            # avg_test_scalars = avg_test_scalars.mean()
+            # nowerror = avg_test_scalars["D1"][0]
+            # if  nowerror < error :
+            #    bestepoch = epoch_idx
+            #    error = avg_test_scalars["D1"][0]
+            # save_scalars(logger, 'fulltest', avg_test_scalars, len(TrainImgLoader) * (epoch_idx + 1))
+            # print("avg_test_scalars", avg_test_scalars)
+            # print('MAX epoch %d total test error = %.5f' % (bestepoch, error))
+            # gc.collect()
 
+            # kitti test
+            avg_test_scalars_kitti = AverageMeterDict()
+            for batch_idx, sample in enumerate(TestImgLoaderkitti):
+                global_step = len(TestImgLoader) * epoch_idx + batch_idx
+                start_time = time.time()
+                do_summary = global_step % args.summary_freq == 0
+                loss, scalar_outputs, image_outputs = test_sample(sample, compute_metrics=do_summary)
+                if do_summary:
+                    save_scalars(logger, 'test', scalar_outputs, global_step)
+                    save_images(logger, 'test', image_outputs, global_step)
+                avg_test_scalars_kitti.update(scalar_outputs)
+                del scalar_outputs, image_outputs
+                print('Epoch {}/{}, Iter {}/{}, test loss = {:.3f}, time = {:3f}'.format(epoch_idx, args.epochs,
+                                                                                         batch_idx,
+                                                                                         len(TestImgLoaderkitti), loss,
+                                                                                         time.time() - start_time))
+            avg_test_scalars_kitti = avg_test_scalars_kitti.mean()
+            nowerror = avg_test_scalars_kitti["D1"][0]
+            if nowerror < kittierror:
+                bestepochkitti = epoch_idx
+                kittierror = avg_test_scalars_kitti["D1"][0]
+            save_scalars(logger, 'testkitti', avg_test_scalars_kitti, len(TrainImgLoader) * (epoch_idx + 1))
+            print("avg_test_scalars", avg_test_scalars_kitti)
+            print('KITTI MAX epoch %d total test error = %.5f' % (bestepochkitti, kittierror))
+            gc.collect()
 
-
-         # kitti test
-         avg_test_scalars_kitti = AverageMeterDict()
-         for batch_idx, sample in enumerate(TestImgLoaderkitti):
-            global_step = len(TestImgLoader) * epoch_idx + batch_idx
-            start_time = time.time()
-            do_summary = global_step % args.summary_freq == 0
-            loss, scalar_outputs, image_outputs = test_sample(sample, compute_metrics=do_summary)
-            if do_summary:
-                save_scalars(logger, 'test', scalar_outputs, global_step)
-                save_images(logger, 'test', image_outputs, global_step)
-            avg_test_scalars_kitti.update(scalar_outputs)
-            del scalar_outputs, image_outputs
-            print('Epoch {}/{}, Iter {}/{}, test loss = {:.3f}, time = {:3f}'.format(epoch_idx, args.epochs,
-                                                                                     batch_idx,
-                                                                                     len(TestImgLoaderkitti), loss,
-                                                                                     time.time() - start_time))
-         avg_test_scalars_kitti = avg_test_scalars_kitti.mean()
-         nowerror = avg_test_scalars_kitti["D1"][0]
-         if  nowerror < kittierror :
-            bestepochkitti = epoch_idx
-            kittierror = avg_test_scalars_kitti["D1"][0]
-         save_scalars(logger, 'testkitti', avg_test_scalars_kitti, len(TrainImgLoader) * (epoch_idx + 1))
-         print("avg_test_scalars", avg_test_scalars_kitti)
-         print('KITTI MAX epoch %d total test error = %.5f' % (bestepochkitti, kittierror))
-         gc.collect()
-
-
-         #mid test
-         avg_test_scalars_mid = AverageMeterDict()
-         for batch_idx, sample in enumerate(TestImgLoadermiddlebury):
-            global_step = len(TestImgLoader) * epoch_idx + batch_idx
-            start_time = time.time()
-            do_summary = global_step % args.summary_freq == 0
-            loss, scalar_outputs, image_outputs = test_sample(sample, dataset = 'mid', compute_metrics=do_summary)
-            if do_summary:
-                save_scalars(logger, 'test', scalar_outputs, global_step)
-                save_images(logger, 'test', image_outputs, global_step)
-            avg_test_scalars_mid.update(scalar_outputs)
-            del scalar_outputs, image_outputs
-            print('Epoch {}/{}, Iter {}/{}, test loss = {:.3f}, time = {:3f}'.format(epoch_idx, args.epochs,
-                                                                                     batch_idx,
-                                                                                     len(TestImgLoadermiddlebury), loss,
-                                                                                     time.time() - start_time))
-         avg_test_scalars_mid = avg_test_scalars_mid.mean()
-         nowerror = avg_test_scalars_mid["D1"][0]
-         if nowerror < miderror:
-            bestepochmid = epoch_idx
-            miderror = avg_test_scalars_mid["D1"][0]
-         save_scalars(logger, 'testmid', avg_test_scalars_mid, len(TrainImgLoader) * (epoch_idx + 1))
-         print("avg_test_scalars_mid", avg_test_scalars_mid)
-         print('Middlebury MAX epoch %d total test error = %.5f' % (bestepochmid, miderror))
-         gc.collect()
-        # #
-        # #
-        # #
-        # #
-        # # #eth3d test
-         avg_test_scalars_eth3d = AverageMeterDict()
-         for batch_idx, sample in enumerate(TestImgLoadereth3d):
-            global_step = len(TestImgLoader) * epoch_idx + batch_idx
-            start_time = time.time()
-            do_summary = global_step % args.summary_freq == 0
-            loss, scalar_outputs, image_outputs = test_sample(sample, compute_metrics=do_summary)
-            if do_summary:
-                save_scalars(logger, 'test', scalar_outputs, global_step)
-                save_images(logger, 'test', image_outputs, global_step)
-            avg_test_scalars_eth3d.update(scalar_outputs)
-            del scalar_outputs, image_outputs
-            print('Epoch {}/{}, Iter {}/{}, test loss = {:.3f}, time = {:3f}'.format(epoch_idx, args.epochs,
-                                                                                     batch_idx,
-                                                                                     len(TestImgLoadereth3d), loss,
-                                                                                     time.time() - start_time))
-         avg_test_scalars_eth3d = avg_test_scalars_eth3d.mean()
-         nowerror = avg_test_scalars_eth3d["D1"][0]
-         if nowerror < eth3derror:
-            bestepocheth3d = epoch_idx
-            eth3derror = avg_test_scalars_eth3d["D1"][0]
-         save_scalars(logger, 'testeth3d', avg_test_scalars_eth3d, len(TrainImgLoader) * (epoch_idx + 1))
-         print("avg_test_scalars_eth3d", avg_test_scalars_eth3d)
-         print('ETH3D MAX epoch %d total test error = %.5f' % (bestepocheth3d, eth3derror))
-         gc.collect()
+            # mid test
+            avg_test_scalars_mid = AverageMeterDict()
+            for batch_idx, sample in enumerate(TestImgLoadermiddlebury):
+                global_step = len(TestImgLoader) * epoch_idx + batch_idx
+                start_time = time.time()
+                do_summary = global_step % args.summary_freq == 0
+                loss, scalar_outputs, image_outputs = test_sample(sample, dataset='mid', compute_metrics=do_summary)
+                if do_summary:
+                    save_scalars(logger, 'test', scalar_outputs, global_step)
+                    save_images(logger, 'test', image_outputs, global_step)
+                avg_test_scalars_mid.update(scalar_outputs)
+                del scalar_outputs, image_outputs
+                print('Epoch {}/{}, Iter {}/{}, test loss = {:.3f}, time = {:3f}'.format(epoch_idx, args.epochs,
+                                                                                         batch_idx,
+                                                                                         len(TestImgLoadermiddlebury),
+                                                                                         loss,
+                                                                                         time.time() - start_time))
+            avg_test_scalars_mid = avg_test_scalars_mid.mean()
+            nowerror = avg_test_scalars_mid["D1"][0]
+            if nowerror < miderror:
+                bestepochmid = epoch_idx
+                miderror = avg_test_scalars_mid["D1"][0]
+            save_scalars(logger, 'testmid', avg_test_scalars_mid, len(TrainImgLoader) * (epoch_idx + 1))
+            print("avg_test_scalars_mid", avg_test_scalars_mid)
+            print('Middlebury MAX epoch %d total test error = %.5f' % (bestepochmid, miderror))
+            gc.collect()
+            # #
+            # #
+            # #
+            # #
+            # # #eth3d test
+            avg_test_scalars_eth3d = AverageMeterDict()
+            for batch_idx, sample in enumerate(TestImgLoadereth3d):
+                global_step = len(TestImgLoader) * epoch_idx + batch_idx
+                start_time = time.time()
+                do_summary = global_step % args.summary_freq == 0
+                loss, scalar_outputs, image_outputs = test_sample(sample, compute_metrics=do_summary)
+                if do_summary:
+                    save_scalars(logger, 'test', scalar_outputs, global_step)
+                    save_images(logger, 'test', image_outputs, global_step)
+                avg_test_scalars_eth3d.update(scalar_outputs)
+                del scalar_outputs, image_outputs
+                print('Epoch {}/{}, Iter {}/{}, test loss = {:.3f}, time = {:3f}'.format(epoch_idx, args.epochs,
+                                                                                         batch_idx,
+                                                                                         len(TestImgLoadereth3d), loss,
+                                                                                         time.time() - start_time))
+            avg_test_scalars_eth3d = avg_test_scalars_eth3d.mean()
+            nowerror = avg_test_scalars_eth3d["D1"][0]
+            if nowerror < eth3derror:
+                bestepocheth3d = epoch_idx
+                eth3derror = avg_test_scalars_eth3d["D1"][0]
+            save_scalars(logger, 'testeth3d', avg_test_scalars_eth3d, len(TrainImgLoader) * (epoch_idx + 1))
+            print("avg_test_scalars_eth3d", avg_test_scalars_eth3d)
+            print('ETH3D MAX epoch %d total test error = %.5f' % (bestepocheth3d, eth3derror))
+            gc.collect()
 
     print('ETH3D MAX epoch %d total eth3dtest error = %.5f' % (bestepocheth3d, eth3derror))
     print('Middlebury MAX epoch %d total midtest error = %.5f' % (bestepochmid, miderror))
@@ -298,7 +294,7 @@ def train_sample(sample, compute_metrics=False):
 
 # test one sample
 @make_nograd_func
-def test_sample(sample, dataset = 'kitti', compute_metrics=True):
+def test_sample(sample, dataset='kitti', compute_metrics=True):
     model.eval()
 
     imgL, imgR, disp_gt = sample['left'], sample['right'], sample['disparity']
@@ -308,18 +304,19 @@ def test_sample(sample, dataset = 'kitti', compute_metrics=True):
     imgR = imgR.cuda()
     disp_gt = disp_gt.cuda()
 
-    disp_ests, pred3_s3, pred3_s4  = model(imgL, imgR)
+    disp_ests, pred3_s3, pred3_s4 = model(imgL, imgR)
     if dataset == 'mid':
         # print(disp_gt.size())
-        #mask = (disp_gt < args.maxdisp * 2) & (disp_gt > 0)
+        # mask = (disp_gt < args.maxdisp * 2) & (disp_gt > 0)
         mask = disp_gt > 0
         disp_ests[0] = disp_ests[0][:, toppad:, :-rightpad]
         pred3_s3[0] = pred3_s3[0][:, toppad:, :-rightpad]
         pred3_s4[0] = pred3_s4[0][:, toppad:, :-rightpad]
 
-        disp_ests = F.upsample(disp_ests[0].unsqueeze(1) * 2, [disp_gt.size()[1], disp_gt.size()[2]], mode='bilinear', align_corners=True).squeeze(1)
-        pred3_s3 = F.upsample(pred3_s3[0].unsqueeze(1) * 2, [disp_gt.size()[1], disp_gt.size()[2]], mode='bilinear',
+        disp_ests = F.upsample(disp_ests[0].unsqueeze(1) * 2, [disp_gt.size()[1], disp_gt.size()[2]], mode='bilinear',
                                align_corners=True).squeeze(1)
+        pred3_s3 = F.upsample(pred3_s3[0].unsqueeze(1) * 2, [disp_gt.size()[1], disp_gt.size()[2]], mode='bilinear',
+                              align_corners=True).squeeze(1)
         pred3_s4 = F.upsample(pred3_s4[0].unsqueeze(1) * 2, [disp_gt.size()[1], disp_gt.size()[2]], mode='bilinear',
                               align_corners=True).squeeze(1)
 
