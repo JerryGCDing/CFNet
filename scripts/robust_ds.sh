@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -x
 
 module load anaconda3/2022.05 cuda/11.1 gcc/10.1.0
 source activate sense_release
