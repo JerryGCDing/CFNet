@@ -244,7 +244,7 @@ class hourglass_odd(nn.Module):
                                    Mish())
 
         self.conv5 = nn.Sequential(
-            nn.ConvTranspose3d(in_channels * 4, in_channels * 2, 3, padding=0, output_padding=(1, 0, 0), stride=2, bias=False),
+            nn.ConvTranspose3d(in_channels * 4, in_channels * 2, 3, padding=1, output_padding=(1, 0, 0), stride=2, bias=False),
             nn.BatchNorm3d(in_channels * 2))
 
         self.conv6 = nn.Sequential(
