@@ -161,7 +161,6 @@ def train_sample(sample, compute_metrics=False):
     image_outputs = {"disp_est": disp_ests, "disp_gt": disp_gt, "imgL": imgL, "imgR": imgR}
     if compute_metrics:
         with torch.no_grad():
-            image_outputs["errormap"] = [disp_error_image_func()(disp_est, disp_gt) for disp_est in disp_ests]
             scalar_outputs["EPE"] = [EPE_metric(disp_est, disp_gt, mask) for disp_est in disp_ests]
             scalar_outputs["D1"] = [D1_metric(disp_est, disp_gt, mask) for disp_est in disp_ests]
             scalar_outputs["Thres1"] = [Thres_metric(disp_est, disp_gt, mask, 1.0) for disp_est in disp_ests]
@@ -226,9 +225,6 @@ def test_sample(sample, dataset='kitti', compute_metrics=True):
     scalar_outputs["Thres2s3"] = [Thres_metric(disp_est, disp_gt, mask, 2.0) for disp_est in pred3_s3]
     scalar_outputs["Thres2s4"] = [Thres_metric(disp_est, disp_gt, mask, 2.0) for disp_est in pred3_s4]
     scalar_outputs["Thres3"] = [Thres_metric(disp_est, disp_gt, mask, 3.0) for disp_est in disp_ests]
-
-    if compute_metrics:
-        image_outputs["errormap"] = [disp_error_image_func()(disp_est, disp_gt) for disp_est in disp_ests]
 
     return tensor2float(loss), tensor2float(scalar_outputs), image_outputs
 
