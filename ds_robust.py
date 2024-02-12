@@ -178,37 +178,14 @@ def test_sample(sample, dataset='kitti', compute_metrics=True):
     model.eval()
 
     imgL, imgR, disp_gt = sample['left'], sample['right'], sample['disparity']
-    toppad, rightpad = sample['top_pad'], sample['right_pad']
     # print(toppad)
     imgL = imgL.cuda()
     imgR = imgR.cuda()
     disp_gt = disp_gt.cuda()
 
     disp_ests, pred3_s3, pred3_s4 = model(imgL, imgR)
-    if dataset == 'mid':
-        # print(disp_gt.size())
-        # mask = (disp_gt < args.maxdisp * 2) & (disp_gt > 0)
-        mask = disp_gt > 0
-        disp_ests[0] = disp_ests[0][:, toppad:, :-rightpad]
-        pred3_s3[0] = pred3_s3[0][:, toppad:, :-rightpad]
-        pred3_s4[0] = pred3_s4[0][:, toppad:, :-rightpad]
-
-        disp_ests = F.upsample(disp_ests[0].unsqueeze(1) * 2, [disp_gt.size()[1], disp_gt.size()[2]], mode='bilinear',
-                               align_corners=True).squeeze(1)
-        pred3_s3 = F.upsample(pred3_s3[0].unsqueeze(1) * 2, [disp_gt.size()[1], disp_gt.size()[2]], mode='bilinear',
-                              align_corners=True).squeeze(1)
-        pred3_s4 = F.upsample(pred3_s4[0].unsqueeze(1) * 2, [disp_gt.size()[1], disp_gt.size()[2]], mode='bilinear',
-                              align_corners=True).squeeze(1)
-
-        disp_ests = [disp_ests]
-        pred3_s3 = [pred3_s3]
-        pred3_s4 = [pred3_s4]
-        inrange_s4 = (disp_gt > 0) & (disp_gt < 256 * 2) & mask
-
-    # mask = disp_gt > 0
-    else:
-        mask = (disp_gt < args.maxdisp) & (disp_gt > 0)
-        inrange_s4 = (disp_gt > 0) & (disp_gt < 256) & mask
+    mask = (disp_gt < args.maxdisp) & (disp_gt > 0)
+    inrange_s4 = (disp_gt > 0) & (disp_gt < 256) & mask
     loss = model_loss(disp_ests, disp_gt, mask)
 
     scalar_outputs = {"loss": loss}
