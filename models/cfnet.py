@@ -28,7 +28,7 @@ class feature_extraction(nn.Module):
         self.layer5 = self._make_layer(BasicBlock, 256, 1, 2, 1, 1)
         self.layer6 = self._make_layer(BasicBlock, 512, 1, 2, 1, 1)
         self.pyramid_pooling = pyramidPooling(512, None, fusion_mode='sum', model_name='icnet')
-        self.upconv6 = nn.Sequential(nn.Upsample(scale_factor=2),
+        self.upconv6 = nn.Sequential(nn.Upsample(size=(25, 55)),
                                      convbn(512, 256, 3, 1, 1, 1),
                                      Mish())
         self.iconv5 = nn.Sequential(convbn(512, 256, 3, 1, 1, 1),
@@ -191,7 +191,7 @@ class hourglassup(nn.Module):
                                    Mish())
 
         self.conv8 = nn.Sequential(
-            nn.ConvTranspose3d(in_channels * 4, in_channels * 2, 3, padding=1, output_padding=1, stride=2, bias=False),
+            nn.ConvTranspose3d(in_channels * 4, in_channels * 2, 3, padding=1, output_padding=(1, 0, 0), stride=2, bias=False),
             nn.BatchNorm3d(in_channels * 2))
 
         self.conv9 = nn.Sequential(
@@ -210,7 +210,7 @@ class hourglassup(nn.Module):
         self.redir3 = convbn_3d(in_channels * 4, in_channels * 4, kernel_size=1, stride=1, pad=0)
 
 
-    def forward(self, x, feature4, feature5):
+    def forward(self, x , feature4, feature5):
         conv1 = self.conv1(x)          #1/8
         conv1 = torch.cat((conv1, feature4), dim=1)   #1/8
         conv1 = self.combine1(conv1)   #1/8
@@ -226,6 +226,49 @@ class hourglassup(nn.Module):
 
 
         return conv9
+
+class hourglass_odd(nn.Module):
+    def __init__(self, in_channels):
+        super(hourglass_odd, self).__init__()
+
+        self.conv1 = nn.Sequential(convbn_3d(in_channels, in_channels * 2, 3, 2, 1),
+                                   Mish())
+
+        self.conv2 = nn.Sequential(convbn_3d(in_channels * 2, in_channels * 2, 3, 1, 1),
+                                   Mish())
+
+        self.conv3 = nn.Sequential(convbn_3d(in_channels * 2, in_channels * 4, 3, 2, 1),
+                                   Mish())
+
+        self.conv4 = nn.Sequential(convbn_3d(in_channels * 4, in_channels * 4, 3, 1, 1),
+                                   Mish())
+
+        self.conv5 = nn.Sequential(
+            nn.ConvTranspose3d(in_channels * 4, in_channels * 2, 3, padding=0, output_padding=(1, 0, 0), stride=2, bias=False),
+            nn.BatchNorm3d(in_channels * 2))
+
+        self.conv6 = nn.Sequential(
+            nn.ConvTranspose3d(in_channels * 2, in_channels, 3, padding=1, output_padding=1, stride=2, bias=False),
+            nn.BatchNorm3d(in_channels))
+
+        self.redir1 = convbn_3d(in_channels, in_channels, kernel_size=1, stride=1, pad=0)
+        self.redir2 = convbn_3d(in_channels * 2, in_channels * 2, kernel_size=1, stride=1, pad=0)
+
+    def forward(self, x):
+        conv1 = self.conv1(x)
+        conv2 = self.conv2(conv1)
+
+        conv3 = self.conv3(conv2)
+        conv4 = self.conv4(conv3)
+
+        # conv5 = F.relu(self.conv5(conv4) + self.redir2(conv2), inplace=True)
+        # conv6 = F.relu(self.conv6(conv5) + self.redir1(x), inplace=True)
+
+        conv5 = FMish(self.conv5(conv4) + self.redir2(conv2))
+        conv6 = FMish(self.conv6(conv5) + self.redir1(x))
+
+        return conv6
+
 
 class hourglass(nn.Module):
     def __init__(self, in_channels):
@@ -323,11 +366,7 @@ class cfnet(nn.Module):
 
         self.combine1 = hourglassup(32)
 
-        # self.dres2 = hourglass(32)
-
-        self.dres3 = hourglass(32)
-
-        # self.dres4 = hourglass(32)
+        self.dres3 = hourglass_odd(32)
 
         self.confidence0_s3 = nn.Sequential(convbn_3d(self.num_groups + self.concat_channels*2 + 1 , 32, 3, 1, 1),
                                    Mish(),
@@ -364,12 +403,6 @@ class cfnet(nn.Module):
         # self.confidence1_s1 = nn.Sequential(convbn_3d(16, 16, 3, 1, 1),
         #                                     nn.ReLU(inplace=True),
         #                                     convbn_3d(16, 16, 3, 1, 1))
-        #
-        # self.confidence2_s1 = hourglass(16)
-
-        # self.confidence3 = hourglass(32)
-        #
-        # self.confidence4 = hourglass(32)
 
         self.confidence_classif0_s3 = nn.Sequential(convbn_3d(32, 32, 3, 1, 1),
                                                     Mish(),
