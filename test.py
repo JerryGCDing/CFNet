@@ -1,5 +1,4 @@
 import coloredlogs
-import hydra
 import logging
 import torch.backends.cudnn as cudnn
 import torch.cuda
@@ -125,7 +124,7 @@ def eval_model():
 
         start = time.time()
         with torch.no_grad():
-            disp_est = model(imgL, imgR)[-1].squeeze().cpu().numpy()
+            disp_est = model(imgL, imgR)[-1][0].squeeze().cpu().numpy()
             assert len(disp_est.shape) == 2
             disp_est[disp_est <= 0] -= 1.
 
