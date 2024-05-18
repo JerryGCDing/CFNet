@@ -117,7 +117,7 @@ def eval_dataset(test_model, dataset, *, dataset_name):
 
         start = time.time()
         with torch.no_grad():
-            disp_est = test_model(imgL, imgR)[-1].squeeze().cpu().numpy()
+            disp_est = test_model(imgL, imgR)[0][0].squeeze().cpu().numpy()
             assert len(disp_est.shape) == 2
             disp_est[disp_est <= 0] -= 1.
 
