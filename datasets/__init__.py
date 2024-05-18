@@ -1,4 +1,4 @@
-from .kitti_dataset import KITTIDataset
+from .kitti_dataset import KITTIDataset, VoxelKITTIDataset
 from .sceneflow_dataset import SceneFlowDatset
 from .ds_dataset import DSDataset, VoxelDSDatasetCalib
 
